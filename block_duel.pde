@@ -1,3 +1,6 @@
+import processing.video.*;
+import processing.sound.*;
+
 import org.jbox2d.dynamics.*;
 import org.jbox2d.collision.shapes.PolygonShape;
 import org.jbox2d.common.Vec2;
@@ -17,21 +20,48 @@ float blockSize = 15;
 float winLineY = 500;
 
 // Imagens da tela inicial
-PImage fundoImg;
+PImage logoImg;
 PImage botaoImg;
 boolean telaInicial = true;
 float botaoX, botaoY, botaoW = 200, botaoH = 100;
+
+// Sons
+SoundFile somIntro;
+SoundFile somJogo;
+SoundFile somColisao;
+SoundFile somVitoria;
+Movie videoIntro;  // Vídeo da tela inicial
+Movie videoJogo;   // Vídeo de fundo durante o jogo
+
+boolean tocandoSomJogo = false;
 
 void setup() {
   size(800, 600);
 
   // Carregar imagens
-  fundoImg = loadImage("fotos/fundo.png");
-  botaoImg = loadImage("fotos/botao.png");
-
+  botaoImg = loadImage("fotos/botao.jpg");
+  logoImg = loadImage("fotos/logo.jpg");
   botaoX = width / 2 - botaoW / 2;
   botaoY = height / 2 - botaoH / 2;
 
+  // Vídeo do jogo
+  videoJogo = new Movie(this, "fundoJogo.mp4");
+  videoJogo.loop();
+  videoJogo.pause();
+
+  // Sons
+  somIntro = new SoundFile(this, "sons/intro.mp3");
+  somJogo = new SoundFile(this, "sons/jogo.mp3");
+  somColisao = new SoundFile(this, "sons/colisao.mp3");
+  somVitoria = new SoundFile(this, "sons/vitoria.mp3");
+
+  somIntro.loop();
+
+  // Vídeo da introdução
+  videoIntro = new Movie(this, "video.mp4");
+  videoIntro.loop();
+
+  // Física
   box2d = new Box2DProcessing(this);
   box2d.createWorld();
   box2d.setGravity(0, -20);
@@ -44,12 +74,25 @@ void setup() {
 
 void draw() {
   if (telaInicial) {
-    image(fundoImg, 0, 0, width, height);
+    image(videoIntro, 0, 0, width, height);
+
+    float logoW = 400;
+    float logoH = 200;
+    float logoX = width / 2 - logoW / 2;
+    float logoY = 50;
+    image(logoImg, logoX, logoY, logoW, logoH);
+
+    botaoW = 300;
+    botaoH = 150;
+    botaoX = width / 2 - botaoW / 2;
+    botaoY = height - botaoH - 40;
     image(botaoImg, botaoX, botaoY, botaoW, botaoH);
     return;
   }
 
-  background(255);
+  // Desenhar o vídeo de fundo do jogo
+  image(videoJogo, 0, 0, width, height);
+
   box2d.step();
 
   // Linha de vitória
@@ -60,29 +103,31 @@ void draw() {
   // Divisória vertical
   stroke(0);
   strokeWeight(3);
-  line(width/2, 0, width/2, height);
+  line(width / 2, 0, width / 2, height);
 
-  // Desenhar todos os blocos empilhados
+  // Blocos empilhados
   for (Body b : allBlocks) {
     drawBlock(b);
     Vec2 pos = box2d.getBodyPixelCoord(b);
     if (pos.y <= winLineY && !gameOver) {
       gameOver = true;
-      winnerText = (box2d.getBodyPixelCoord(b).x < width/2) ? "Jogador 1 venceu!" : "Jogador 2 venceu!";
+      winnerText = (pos.x < width / 2) ? "Jogador 1 venceu!" : "Jogador 2 venceu!";
+      somVitoria.play();
+      videoJogo.pause(); // Pausar o vídeo quando o jogo termina
       break;
     }
   }
 
-  // Exibir mensagem de vitória
+  // Mensagem de vitória
   if (gameOver) {
     textAlign(CENTER);
     textSize(32);
     fill(0, 150, 0);
-    text(winnerText, width/2, height/2);
+    text(winnerText, width / 2, height / 2);
     return;
   }
 
-  // Desenhar e controlar bloco do jogador 1
+  // Jogador 1
   if (fallingBlock1 != null) {
     drawBlock(fallingBlock1);
     if (fallingBlock1.getLinearVelocity().length() < 0.05f &&
@@ -90,6 +135,7 @@ void draw() {
       allBlocks.add(fallingBlock1);
       fallingBlock1 = null;
       canDropNewBlock1 = true;
+      somColisao.play();
     }
   }
 
@@ -101,6 +147,7 @@ void draw() {
       allBlocks.add(fallingBlock2);
       fallingBlock2 = null;
       canDropNewBlock2 = true;
+      somColisao.play();
     }
   }
 
@@ -109,12 +156,12 @@ void draw() {
     fallingBlock1 = dropBlock(true);
     canDropNewBlock1 = false;
   }
-
   if (canDropNewBlock2) {
     fallingBlock2 = dropBlock(false);
     canDropNewBlock2 = false;
   }
 }
+
 
 void drawBlock(Body b) {
   Vec2 pos = box2d.getBodyPixelCoord(b);
@@ -273,5 +320,14 @@ void mousePressed() {
   if (telaInicial && mouseX >= botaoX && mouseX <= botaoX + botaoW &&
       mouseY >= botaoY && mouseY <= botaoY + botaoH) {
     telaInicial = false;
+    videoIntro.stop();
+    somIntro.stop();
+    somJogo.loop();
+    tocandoSomJogo = true;
+    videoJogo.play(); // Começa vídeo do fundo
   }
+}
+
+void movieEvent(Movie m) {
+  m.read();
 }
