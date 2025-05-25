@@ -8,6 +8,10 @@ import shiffman.box2d.*;
 
 import java.util.ArrayList;
 
+ArrayList<Confete> confetes;
+int maxConfetes = 30;
+
+
 Box2DProcessing box2d;
 ArrayList<Body> allBlocks;
 Body fallingBlock1;
@@ -39,8 +43,8 @@ void setup() {
   size(800, 600);
 
   // Carregar imagens
-  botaoImg = loadImage("fotos/botao.jpg");
-  logoImg = loadImage("fotos/logo.jpg");
+  botaoImg = loadImage("fotos/botao.png");
+  logoImg = loadImage("fotos/logo.png");
   botaoX = width / 2 - botaoW / 2;
   botaoY = height / 2 - botaoH / 2;
 
@@ -70,23 +74,33 @@ void setup() {
   allBlocks = new ArrayList<Body>();
   createGround();
   createDivider();
+  confetes = new ArrayList<Confete>();
+for (int i = 0; i < maxConfetes; i++) {
+  confetes.add(new Confete());
+}
+
 }
 
 void draw() {
   if (telaInicial) {
     image(videoIntro, 0, 0, width, height);
+      for (Confete c : confetes) {
+  c.update();
+  c.display();
+}
 
-    float logoW = 400;
-    float logoH = 200;
+    float logoW = 380;
+    float logoH = 250;
     float logoX = width / 2 - logoW / 2;
-    float logoY = 50;
+    float logoY = 10;
     image(logoImg, logoX, logoY, logoW, logoH);
 
-    botaoW = 300;
-    botaoH = 150;
+    botaoW = 320;
+    botaoH = 180;
     botaoX = width / 2 - botaoW / 2;
-    botaoY = height - botaoH - 40;
+    botaoY = height - botaoH ;
     image(botaoImg, botaoX, botaoY, botaoW, botaoH);
+
     return;
   }
 
@@ -235,7 +249,7 @@ void createBoxFixture(Body body, float x, float y, float halfW, float halfH) {
 
   FixtureDef fd = new FixtureDef();
   fd.shape = ps;
-  fd.density = 0.2f;
+  fd.density = 1.2f;
   fd.friction = 1.2f;
   fd.restitution = 0.0f;
 
@@ -330,4 +344,59 @@ void mousePressed() {
 
 void movieEvent(Movie m) {
   m.read();
+}
+class Confete {
+  float x, y;
+  float speedY;
+  float angle, rotationSpeed;
+  float w, h;
+  color col;
+
+  Confete() {
+    reset();
+  }
+
+  void reset() {
+  x = random(width);
+  y = random(-height, 0);
+  speedY = random(2, 4);
+  angle = random(TWO_PI);
+  rotationSpeed = random(-0.03, 0.03);
+
+  w = random(12, 18);
+  h = random(12, 18);
+
+  // Cores variadas
+  color[] cores = {
+    color(255, 0, 0),    // vermelho
+    color(0, 0, 255),    // azul
+    color(0, 200, 0),    // verde
+    color(255, 200, 0),  // amarelo
+    color(255, 100, 0),  // laranja
+    color(180, 0, 180),  // roxo
+    color(0, 200, 200)   // ciano
+  };
+  col = cores[int(random(cores.length))];
+}
+
+
+  void update() {
+    y += speedY;
+    angle += rotationSpeed;
+    if (y > height + h) {
+      reset();
+    }
+  }
+
+  void display() {
+    pushMatrix();
+    translate(x, y);
+    rotate(angle);
+    rectMode(CENTER);
+    fill(col);
+    stroke(0);
+    strokeWeight(1.2);
+    rect(0, 0, w, h);
+    popMatrix();
+  }
 }
