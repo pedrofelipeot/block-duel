@@ -11,6 +11,10 @@ import java.util.ArrayList;
 ArrayList<Confete> confetes;
 int maxConfetes = 30;
 
+ArrayList<ConfeteVitoria> confetesVitoria;
+int maxConfetesVitoria = 90;
+
+
 
 Box2DProcessing box2d;
 ArrayList<Body> allBlocks;
@@ -21,11 +25,22 @@ boolean canDropNewBlock2 = true;
 boolean gameOver = false;
 String winnerText = "";
 float blockSize = 15;
-float winLineY = 500;
+float winLineY = 100;
 
 // Imagens da tela inicial
 PImage logoImg;
 PImage botaoImg;
+PImage chaoImg;
+PImage chegadaImg;
+
+PImage vencedor1Img;
+PImage vencedor2Img;
+
+
+float yChaoImagem = 590;     // Onde a imagem do chão começa na tela
+float yChaoFisico = 570;     // Onde está o chão físico (colisão)
+
+
 boolean telaInicial = true;
 float botaoX, botaoY, botaoW = 200, botaoH = 100;
 
@@ -45,6 +60,14 @@ void setup() {
   // Carregar imagens
   botaoImg = loadImage("fotos/botao.png");
   logoImg = loadImage("fotos/logo.png");
+  chaoImg = loadImage("fotos/chao.png"); // ajuste o caminho conforme sua estrutura
+  vencedor1Img = loadImage("fotos/jogador1.png");
+vencedor2Img = loadImage("fotos/jogador2.png");
+
+chegadaImg = loadImage("fotos/chegada.png"); // ajuste o caminho conforme necessário
+
+
+
   botaoX = width / 2 - botaoW / 2;
   botaoY = height / 2 - botaoH / 2;
 
@@ -68,7 +91,7 @@ void setup() {
   // Física
   box2d = new Box2DProcessing(this);
   box2d.createWorld();
-  box2d.setGravity(0, -20);
+  box2d.setGravity(0, -90);
   box2d.world.setAllowSleep(false);
 
   allBlocks = new ArrayList<Body>();
@@ -78,6 +101,13 @@ void setup() {
 for (int i = 0; i < maxConfetes; i++) {
   confetes.add(new Confete());
 }
+
+confetesVitoria = new ArrayList<ConfeteVitoria>();
+for (int i = 0; i < maxConfetesVitoria; i++) {
+  confetesVitoria.add(new ConfeteVitoria());
+}
+
+
 
 }
 
@@ -106,6 +136,13 @@ void draw() {
 
   // Desenhar o vídeo de fundo do jogo
   image(videoJogo, 0, 0, width, height);
+  float chaoAltura = 30;  // altura que quiser para o chão (ex: 150 pixels)
+float chaoY = 570;
+
+imageMode(CORNER);
+image(chaoImg, 0, chaoY, width, chaoAltura);
+
+
 
   box2d.step();
 
@@ -113,6 +150,14 @@ void draw() {
   stroke(0, 200, 0);
   strokeWeight(2);
   line(0, winLineY, width, winLineY);
+  
+  float chegadaW = 60;  // largura da imagem de chegada
+float chegadaH = 60;  // altura da imagem de chegada
+float chegadaX = width / 2 - chegadaW / 2;
+float chegadaY = winLineY - chegadaH / 2;
+
+image(chegadaImg, chegadaX, chegadaY, chegadaW, chegadaH);
+
 
   // Divisória vertical
   stroke(0);
@@ -132,14 +177,25 @@ void draw() {
     }
   }
 
-  // Mensagem de vitória
-  if (gameOver) {
-    textAlign(CENTER);
-    textSize(32);
-    fill(0, 150, 0);
-    text(winnerText, width / 2, height / 2);
-    return;
+if (gameOver) {
+  imageMode(CORNER);
+
+  if (winnerText.equals("Jogador 1 venceu!")) {
+    image(vencedor1Img, 0, 0, width, height);
+  } else if (winnerText.equals("Jogador 2 venceu!")) {
+    image(vencedor2Img, 0, 0, width, height);
   }
+
+ for (ConfeteVitoria c : confetesVitoria) {
+    c.update();
+    c.display();
+  }
+
+  return;
+}
+
+
+
 
   // Jogador 1
   if (fallingBlock1 != null) {
@@ -259,14 +315,19 @@ void createBoxFixture(Body body, float x, float y, float halfW, float halfH) {
 void createGround() {
   float groundWidth = width;
   float groundHeight = 20;
-  Vec2 groundPos = new Vec2(width / 2, height - groundHeight / 2);
+Vec2 groundPos = new Vec2(width / 2, yChaoFisico + groundHeight / 2);
+
+
 
   BodyDef bd = new BodyDef();
   bd.position = box2d.coordPixelsToWorld(groundPos);
   Body ground = box2d.createBody(bd);
 
   PolygonShape shape = new PolygonShape();
-  shape.setAsBox(box2d.scalarPixelsToWorld(groundWidth / 2), box2d.scalarPixelsToWorld(groundHeight / 2));
+  shape.setAsBox(
+    box2d.scalarPixelsToWorld(groundWidth / 2),
+    box2d.scalarPixelsToWorld(groundHeight / 2)
+  );
 
   FixtureDef fd = new FixtureDef();
   fd.shape = shape;
@@ -274,6 +335,7 @@ void createGround() {
 
   ground.createFixture(fd);
 }
+
 
 void createDivider() {
   float dividerWidth = 10;
@@ -397,6 +459,65 @@ class Confete {
     stroke(0);
     strokeWeight(1.2);
     rect(0, 0, w, h);
+    popMatrix();
+  }
+}
+
+class ConfeteVitoria {
+  float x, y;
+  float speedY;
+  float angle, rotationSpeed;
+  float size;
+  color col;
+
+  ConfeteVitoria() {
+    reset();
+  }
+
+  void reset() {
+    x = random(width);
+    y = random(-height, 0);
+    speedY = random(1, 3);
+    angle = random(TWO_PI);
+    rotationSpeed = random(-0.05, 0.05);
+    size = random(8, 15);
+
+    color[] cores = {
+      color(255, 0, 0),    // vermelho
+      color(0, 0, 255),    // azul
+      color(0, 200, 0),    // verde
+      color(255, 200, 0),  // amarelo
+      color(255, 100, 0),  // laranja
+      color(180, 0, 180),  // roxo
+      color(0, 200, 200)   // ciano
+    };
+    col = cores[int(random(cores.length))];
+  }
+
+  void update() {
+    y += speedY;
+    angle += rotationSpeed;
+    if (y > height + size) {
+      reset();
+    }
+  }
+
+  void display() {
+    pushMatrix();
+    translate(x, y);
+    rotate(angle);
+    noStroke();
+    fill(col);
+
+    // Forma orgânica: ex. triângulo alongado com curvas
+    beginShape();
+    vertex(-size/2, -size/4);
+    bezierVertex(-size/3, 0, -size/4, size/2, 0, size/2);
+    bezierVertex(size/4, size/2, size/3, 0, size/2, -size/4);
+    bezierVertex(size/3, -size/2, size/4, -size/2, 0, -size/3);
+    bezierVertex(-size/4, -size/2, -size/3, -size/2, -size/2, -size/4);
+    endShape(CLOSE);
+
     popMatrix();
   }
 }
