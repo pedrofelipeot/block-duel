@@ -17,7 +17,6 @@ int maxConfetes = 40;
 ArrayList<ConfeteVitoria> confetesVitoria;
 int maxConfetesVitoria = 120;
 
-
 Box2DProcessing box2d;
 ArrayList<Body> allBlocks;
 Body fallingBlock1;
@@ -29,7 +28,6 @@ String winnerText = "";
 float blockSize = 15;
 float winLineY = 150;
 
-// Imagens da tela inicial
 PImage logoImg;
 PImage botaoImg;
 PImage chaoImg;
@@ -38,45 +36,39 @@ PImage chegadaImg;
 PImage vencedor1Img;
 PImage vencedor2Img;
 
-
-float yChaoImagem = 590;     // Onde a imagem do chão começa na tela
-float yChaoFisico = 570;     // Onde está o chão físico (colisão)
-
+float yChaoImagem = 590;    
+float yChaoFisico = 570;    
 
 boolean telaInicial = true;
 float botaoX, botaoY, botaoW = 200, botaoH = 100;
 
-// Sons
 SoundFile somIntro;
 SoundFile somJogo;
 SoundFile somColisao;
 SoundFile somVitoria;
-Movie videoIntro;  // Vídeo da tela inicial
-Movie videoJogo;   // Vídeo de fundo durante o jogo
+Movie videoIntro; 
+Movie videoJogo;  
 
 boolean tocandoSomJogo = false;
 
 void setup() {
   size(800, 600);
 
-  // Carregar imagens
   botaoImg = loadImage("fotos/botao.png");
   logoImg = loadImage("fotos/logo.png");
-  chaoImg = loadImage("fotos/chao.png"); // ajuste o caminho conforme sua estrutura
+  chaoImg = loadImage("fotos/chao.png");
   vencedor1Img = loadImage("fotos/jogador1.png");
   vencedor2Img = loadImage("fotos/jogador2.png");
 
-  chegadaImg = loadImage("fotos/chegada.png"); // ajuste o caminho conforme necessário
+  chegadaImg = loadImage("fotos/chegada.png");
 
   botaoX = width / 2 - botaoW / 2;
   botaoY = height / 2 - botaoH / 2;
 
-  // Vídeo do jogo
   videoJogo = new Movie(this, "fundoJogo.mp4");
   videoJogo.loop();
   videoJogo.pause();
 
-  // Sons
   somIntro = new SoundFile(this, "sons/intro.mp3");
   somJogo = new SoundFile(this, "sons/jogo.mp3");
   somColisao = new SoundFile(this, "sons/colisao.mp3");
@@ -84,11 +76,9 @@ void setup() {
 
   somIntro.loop();
 
-  // Vídeo da introdução
   videoIntro = new Movie(this, "video.mp4");
   videoIntro.loop();
 
-  // Física
   box2d = new Box2DProcessing(this);
   box2d.createWorld();
   box2d.setGravity(0, -35);
@@ -129,38 +119,31 @@ void draw() {
     image(botaoImg, botaoX, botaoY, botaoW, botaoH);
     return;
   }
-
-  // Desenhar o vídeo de fundo do jogo
+  
   image(videoJogo, 0, 0, width, height);
-  float chaoAltura = 30;  // altura que quiser para o chão (ex: 150 pixels)
+  float chaoAltura = 30; 
   float chaoY = 570;
 
   imageMode(CORNER);
   image(chaoImg, 0, chaoY, width, chaoAltura);
 
-
-
   box2d.step();
 
-  // Linha de vitória
   stroke(0, 200, 0);
   strokeWeight(2);
   line(0, winLineY, width, winLineY);
 
-  float chegadaW = 60;  // largura da imagem de chegada
-  float chegadaH = 60;  // altura da imagem de chegada
+  float chegadaW = 60;  
+  float chegadaH = 60;  
   float chegadaX = width / 2 - chegadaW / 2;
   float chegadaY = winLineY - chegadaH / 2;
 
   image(chegadaImg, chegadaX, chegadaY, chegadaW, chegadaH);
 
-
-  // Divisória vertical
   stroke(0);
   strokeWeight(3);
   line(width / 2, 0, width / 2, height);
 
-  // Blocos empilhados
   for (Body b : allBlocks) {
     drawBlock(b);
     Vec2 pos = box2d.getBodyPixelCoord(b);
@@ -168,14 +151,13 @@ void draw() {
       gameOver = true;
       winnerText = (pos.x < width / 2) ? "Jogador 1 venceu!" : "Jogador 2 venceu!";
       somVitoria.play();
-      videoJogo.pause(); // Pausar o vídeo quando o jogo termina
+      videoJogo.pause();
       break;
     }
   }
 
   if (gameOver) {
     imageMode(CORNER);
-
     if (winnerText.equals("Jogador 1 venceu!")) {
       image(vencedor1Img, 0, 0, width, height);
     } else if (winnerText.equals("Jogador 2 venceu!")) {
@@ -186,14 +168,9 @@ void draw() {
       c.update();
       c.display();
     }
-
     return;
   }
 
-
-
-
-  // Jogador 1
   if (fallingBlock1 != null) {
     drawBlock(fallingBlock1);
     if (fallingBlock1.getLinearVelocity().length() < 0.05f &&
@@ -205,7 +182,6 @@ void draw() {
     }
   }
 
-  // Jogador 2
   if (fallingBlock2 != null) {
     drawBlock(fallingBlock2);
     if (fallingBlock2.getLinearVelocity().length() < 0.05f &&
@@ -217,7 +193,6 @@ void draw() {
     }
   }
 
-  // Criar novos blocos
   if (canDropNewBlock1) {
     fallingBlock1 = dropBlock(true);
     canDropNewBlock1 = false;
@@ -228,7 +203,6 @@ void draw() {
   }
 }
 
-
 void drawBlock(Body b) {
   Vec2 pos = box2d.getBodyPixelCoord(b);
   float angle = b.getAngle();
@@ -237,7 +211,6 @@ void drawBlock(Body b) {
   translate(pos.x, pos.y);
   rotate(angle);
 
-  // Busca a cor do bloco, se não tiver, usa vermelho
   int c = blockColors.containsKey(b) ? blockColors.get(b) : color(150, 0, 0);
   fill(c);
   stroke(0);
@@ -253,10 +226,8 @@ void drawBlock(Body b) {
     }
     endShape(CLOSE);
   }
-
   popMatrix();
 }
-
 
 Body dropBlock(boolean isLeftSide) {
   float baseX = isLeftSide ? width * 0.25f : width * 0.75f;
@@ -272,19 +243,17 @@ Body dropBlock(boolean isLeftSide) {
   Body newBlock = box2d.createBody(bd);
 
   color[] cores = {
-    color(255, 0, 0), // vermelho
-    color(0, 0, 255), // azul
-    color(0, 200, 0), // verde
-    color(255, 200, 0), // amarelo
-    color(255, 100, 0), // laranja
-    color(180, 0, 180), // roxo
-    color(0, 200, 200)   // ciano
+    color(255, 0, 0), 
+    color(0, 0, 255), 
+    color(0, 200, 0), 
+    color(255, 200, 0), 
+    color(255, 100, 0),
+    color(180, 0, 180),
+    color(0, 200, 200)  
   };
   int corDoBloco = cores[int(random(cores.length))];
 
-  // Armazena a cor para este bloco
   blockColors.put(newBlock, corDoBloco);
-
 
   int type = int(random(3));
   switch (type) {
@@ -351,7 +320,6 @@ void createGround() {
   ground.createFixture(fd);
 }
 
-
 void createDivider() {
   float dividerWidth = 10;
   float dividerHeight = height;
@@ -378,7 +346,7 @@ void keyPressed() {
     if (key == 'r' || key == 'R') {
       reiniciarJogo();
     }
-    return;  // não deixa outros comandos funcionarem durante game over
+    return; 
   }
 
   if (gameOver || telaInicial) return;
@@ -413,12 +381,10 @@ void keyPressed() {
     }
   }
 
-  // Limpar chão para Jogador 1 (tecla 'z' ou 'Z')
   if (key == 'z' || key == 'Z') {
     limparBlocosDoLado(true);
   }
 
-  // Limpar chão para Jogador 2 (tecla 'm' ou 'M')
   if (key == 'm' || key == 'M') {
     limparBlocosDoLado(false);
   }
@@ -432,7 +398,7 @@ void mousePressed() {
     somIntro.stop();
     somJogo.loop();
     tocandoSomJogo = true;
-    videoJogo.play(); // Começa vídeo do fundo
+    videoJogo.play();
   }
 }
 
@@ -462,17 +428,16 @@ class Confete {
 
     // Cores variadas
     color[] cores = {
-      color(255, 0, 0), // vermelho
-      color(0, 0, 255), // azul
-      color(0, 200, 0), // verde
-      color(255, 200, 0), // amarelo
-      color(255, 100, 0), // laranja
-      color(180, 0, 180), // roxo
-      color(0, 200, 200)   // ciano
+      color(255, 0, 0), 
+      color(0, 0, 255), 
+      color(0, 200, 0), 
+      color(255, 200, 0), 
+      color(255, 100, 0), 
+      color(180, 0, 180), 
+      color(0, 200, 200)  
     };
     col = cores[int(random(cores.length))];
   }
-
 
   void update() {
     y += speedY;
@@ -515,13 +480,13 @@ class ConfeteVitoria {
     size = random(8, 15);
 
     color[] cores = {
-      color(255, 0, 0), // vermelho
-      color(0, 0, 255), // azul
-      color(0, 200, 0), // verde
-      color(255, 200, 0), // amarelo
-      color(255, 100, 0), // laranja
-      color(180, 0, 180), // roxo
-      color(0, 200, 200)   // ciano
+      color(255, 0, 0), 
+      color(0, 0, 255), 
+      color(0, 200, 0), 
+      color(255, 200, 0),
+      color(255, 100, 0), 
+      color(180, 0, 180), 
+      color(0, 200, 200)  
     };
     col = cores[int(random(cores.length))];
   }
@@ -533,7 +498,7 @@ class ConfeteVitoria {
       reset();
     }
   }
-
+  
   void display() {
     pushMatrix();
     translate(x, y);
@@ -541,7 +506,6 @@ class ConfeteVitoria {
     noStroke();
     fill(col);
 
-    // Forma orgânica: ex. triângulo alongado com curvas
     beginShape();
     vertex(-size/2, -size/4);
     bezierVertex(-size/3, 0, -size/4, size/2, 0, size/2);
@@ -555,7 +519,6 @@ class ConfeteVitoria {
 }
 
 void limparBlocosDoLado(boolean esquerda) {
-  // Vamos criar uma lista temporária para evitar ConcurrentModificationException
   ArrayList<Body> blocosParaRemover = new ArrayList<Body>();
 
   for (Body b : allBlocks) {
@@ -567,7 +530,6 @@ void limparBlocosDoLado(boolean esquerda) {
     }
   }
 
-  // Remover os corpos do mundo e da lista allBlocks
   for (Body b : blocosParaRemover) {
     box2d.destroyBody(b);
     allBlocks.remove(b);
@@ -575,13 +537,11 @@ void limparBlocosDoLado(boolean esquerda) {
 }
 
 void reiniciarJogo() {
-  // Remover todos os blocos do mundo
   for (Body b : allBlocks) {
     box2d.destroyBody(b);
   }
   allBlocks.clear();
 
-  // Resetar variáveis do jogo
   gameOver = false;
   winnerText = "";
   fallingBlock1 = null;
@@ -589,13 +549,10 @@ void reiniciarJogo() {
   canDropNewBlock1 = true;
   canDropNewBlock2 = true;
 
-  // Parar som de vitória e tocar som do jogo
   somVitoria.stop();
   if (!tocandoSomJogo) {
     somJogo.loop();
     tocandoSomJogo = true;
   }
-
-  // Retomar vídeo de fundo
   videoJogo.play();
 }
