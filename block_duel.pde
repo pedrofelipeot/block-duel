@@ -7,13 +7,15 @@ import org.jbox2d.common.Vec2;
 import shiffman.box2d.*;
 
 import java.util.ArrayList;
+import java.util.HashMap;
+
+HashMap<Body, Integer> blockColors = new HashMap<Body, Integer>();
 
 ArrayList<Confete> confetes;
-int maxConfetes = 30;
+int maxConfetes = 40;
 
 ArrayList<ConfeteVitoria> confetesVitoria;
-int maxConfetesVitoria = 90;
-
+int maxConfetesVitoria = 120;
 
 
 Box2DProcessing box2d;
@@ -25,7 +27,7 @@ boolean canDropNewBlock2 = true;
 boolean gameOver = false;
 String winnerText = "";
 float blockSize = 15;
-float winLineY = 100;
+float winLineY = 150;
 
 // Imagens da tela inicial
 PImage logoImg;
@@ -62,11 +64,9 @@ void setup() {
   logoImg = loadImage("fotos/logo.png");
   chaoImg = loadImage("fotos/chao.png"); // ajuste o caminho conforme sua estrutura
   vencedor1Img = loadImage("fotos/jogador1.png");
-vencedor2Img = loadImage("fotos/jogador2.png");
+  vencedor2Img = loadImage("fotos/jogador2.png");
 
-chegadaImg = loadImage("fotos/chegada.png"); // ajuste o caminho conforme necessário
-
-
+  chegadaImg = loadImage("fotos/chegada.png"); // ajuste o caminho conforme necessário
 
   botaoX = width / 2 - botaoW / 2;
   botaoY = height / 2 - botaoH / 2;
@@ -91,33 +91,30 @@ chegadaImg = loadImage("fotos/chegada.png"); // ajuste o caminho conforme necess
   // Física
   box2d = new Box2DProcessing(this);
   box2d.createWorld();
-  box2d.setGravity(0, -90);
+  box2d.setGravity(0, -35);
   box2d.world.setAllowSleep(false);
 
   allBlocks = new ArrayList<Body>();
   createGround();
   createDivider();
   confetes = new ArrayList<Confete>();
-for (int i = 0; i < maxConfetes; i++) {
-  confetes.add(new Confete());
-}
+  for (int i = 0; i < maxConfetes; i++) {
+    confetes.add(new Confete());
+  }
 
-confetesVitoria = new ArrayList<ConfeteVitoria>();
-for (int i = 0; i < maxConfetesVitoria; i++) {
-  confetesVitoria.add(new ConfeteVitoria());
-}
-
-
-
+  confetesVitoria = new ArrayList<ConfeteVitoria>();
+  for (int i = 0; i < maxConfetesVitoria; i++) {
+    confetesVitoria.add(new ConfeteVitoria());
+  }
 }
 
 void draw() {
   if (telaInicial) {
     image(videoIntro, 0, 0, width, height);
-      for (Confete c : confetes) {
-  c.update();
-  c.display();
-}
+    for (Confete c : confetes) {
+      c.update();
+      c.display();
+    }
 
     float logoW = 380;
     float logoH = 250;
@@ -130,17 +127,16 @@ void draw() {
     botaoX = width / 2 - botaoW / 2;
     botaoY = height - botaoH ;
     image(botaoImg, botaoX, botaoY, botaoW, botaoH);
-
     return;
   }
 
   // Desenhar o vídeo de fundo do jogo
   image(videoJogo, 0, 0, width, height);
   float chaoAltura = 30;  // altura que quiser para o chão (ex: 150 pixels)
-float chaoY = 570;
+  float chaoY = 570;
 
-imageMode(CORNER);
-image(chaoImg, 0, chaoY, width, chaoAltura);
+  imageMode(CORNER);
+  image(chaoImg, 0, chaoY, width, chaoAltura);
 
 
 
@@ -150,13 +146,13 @@ image(chaoImg, 0, chaoY, width, chaoAltura);
   stroke(0, 200, 0);
   strokeWeight(2);
   line(0, winLineY, width, winLineY);
-  
-  float chegadaW = 60;  // largura da imagem de chegada
-float chegadaH = 60;  // altura da imagem de chegada
-float chegadaX = width / 2 - chegadaW / 2;
-float chegadaY = winLineY - chegadaH / 2;
 
-image(chegadaImg, chegadaX, chegadaY, chegadaW, chegadaH);
+  float chegadaW = 60;  // largura da imagem de chegada
+  float chegadaH = 60;  // altura da imagem de chegada
+  float chegadaX = width / 2 - chegadaW / 2;
+  float chegadaY = winLineY - chegadaH / 2;
+
+  image(chegadaImg, chegadaX, chegadaY, chegadaW, chegadaH);
 
 
   // Divisória vertical
@@ -177,22 +173,22 @@ image(chegadaImg, chegadaX, chegadaY, chegadaW, chegadaH);
     }
   }
 
-if (gameOver) {
-  imageMode(CORNER);
+  if (gameOver) {
+    imageMode(CORNER);
 
-  if (winnerText.equals("Jogador 1 venceu!")) {
-    image(vencedor1Img, 0, 0, width, height);
-  } else if (winnerText.equals("Jogador 2 venceu!")) {
-    image(vencedor2Img, 0, 0, width, height);
+    if (winnerText.equals("Jogador 1 venceu!")) {
+      image(vencedor1Img, 0, 0, width, height);
+    } else if (winnerText.equals("Jogador 2 venceu!")) {
+      image(vencedor2Img, 0, 0, width, height);
+    }
+
+    for (ConfeteVitoria c : confetesVitoria) {
+      c.update();
+      c.display();
+    }
+
+    return;
   }
-
- for (ConfeteVitoria c : confetesVitoria) {
-    c.update();
-    c.display();
-  }
-
-  return;
-}
 
 
 
@@ -201,7 +197,7 @@ if (gameOver) {
   if (fallingBlock1 != null) {
     drawBlock(fallingBlock1);
     if (fallingBlock1.getLinearVelocity().length() < 0.05f &&
-        abs(fallingBlock1.getAngularVelocity()) < 0.05f) {
+      abs(fallingBlock1.getAngularVelocity()) < 0.05f) {
       allBlocks.add(fallingBlock1);
       fallingBlock1 = null;
       canDropNewBlock1 = true;
@@ -213,7 +209,7 @@ if (gameOver) {
   if (fallingBlock2 != null) {
     drawBlock(fallingBlock2);
     if (fallingBlock2.getLinearVelocity().length() < 0.05f &&
-        abs(fallingBlock2.getAngularVelocity()) < 0.05f) {
+      abs(fallingBlock2.getAngularVelocity()) < 0.05f) {
       allBlocks.add(fallingBlock2);
       fallingBlock2 = null;
       canDropNewBlock2 = true;
@@ -240,7 +236,10 @@ void drawBlock(Body b) {
   pushMatrix();
   translate(pos.x, pos.y);
   rotate(angle);
-  fill(150, 0, 0);
+
+  // Busca a cor do bloco, se não tiver, usa vermelho
+  int c = blockColors.containsKey(b) ? blockColors.get(b) : color(150, 0, 0);
+  fill(c);
   stroke(0);
   strokeWeight(1);
 
@@ -258,9 +257,10 @@ void drawBlock(Body b) {
   popMatrix();
 }
 
+
 Body dropBlock(boolean isLeftSide) {
   float baseX = isLeftSide ? width * 0.25f : width * 0.75f;
-  float variation = random(-10, 10);
+  float variation = random(-40, 40);
   float startX = baseX + variation;
   float s = box2d.scalarPixelsToWorld(blockSize / 2f);
   float startY = 50;
@@ -271,27 +271,42 @@ Body dropBlock(boolean isLeftSide) {
   bd.position = box2d.coordPixelsToWorld(startX, startY);
   Body newBlock = box2d.createBody(bd);
 
+  color[] cores = {
+    color(255, 0, 0), // vermelho
+    color(0, 0, 255), // azul
+    color(0, 200, 0), // verde
+    color(255, 200, 0), // amarelo
+    color(255, 100, 0), // laranja
+    color(180, 0, 180), // roxo
+    color(0, 200, 200)   // ciano
+  };
+  int corDoBloco = cores[int(random(cores.length))];
+
+  // Armazena a cor para este bloco
+  blockColors.put(newBlock, corDoBloco);
+
+
   int type = int(random(3));
   switch (type) {
-    case 0:
-      createBoxFixture(newBlock, -s - padding, -s - padding, s - padding, s - padding);
-      createBoxFixture(newBlock, s + padding, -s - padding, s - padding, s - padding);
-      createBoxFixture(newBlock, -s - padding, s + padding, s - padding, s - padding);
-      createBoxFixture(newBlock, s + padding, s + padding, s - padding, s - padding);
-      break;
-    case 1:
-      createBoxFixture(newBlock, 0, -3 * s - 2 * padding, s - padding, s - padding);
-      createBoxFixture(newBlock, 0, -s - padding, s - padding, s - padding);
-      createBoxFixture(newBlock, 0, s + padding, s - padding, s - padding);
-      createBoxFixture(newBlock, 2 * s + 2 * padding, s + padding, s - padding, s - padding);
-      break;
-    case 2:
-      createBoxFixture(newBlock, 0, s + padding, s - padding, s - padding);
-      createBoxFixture(newBlock, 0, -s - padding, s - padding, s - padding);
-      createBoxFixture(newBlock, 0, -3 * s - 2 * padding, s - padding, s - padding);
-      createBoxFixture(newBlock, -2 * s - 2 * padding, -3 * s - 2 * padding, s - padding, s - padding);
-      createBoxFixture(newBlock, 2 * s + 2 * padding, -3 * s - 2 * padding, s - padding, s - padding);
-      break;
+  case 0:
+    createBoxFixture(newBlock, -s - padding, -s - padding, s - padding, s - padding);
+    createBoxFixture(newBlock, s + padding, -s - padding, s - padding, s - padding);
+    createBoxFixture(newBlock, -s - padding, s + padding, s - padding, s - padding);
+    createBoxFixture(newBlock, s + padding, s + padding, s - padding, s - padding);
+    break;
+  case 1:
+    createBoxFixture(newBlock, 0, -3 * s - 2 * padding, s - padding, s - padding);
+    createBoxFixture(newBlock, 0, -s - padding, s - padding, s - padding);
+    createBoxFixture(newBlock, 0, s + padding, s - padding, s - padding);
+    createBoxFixture(newBlock, 2 * s + 2 * padding, s + padding, s - padding, s - padding);
+    break;
+  case 2:
+    createBoxFixture(newBlock, 0, s + padding, s - padding, s - padding);
+    createBoxFixture(newBlock, 0, -s - padding, s - padding, s - padding);
+    createBoxFixture(newBlock, 0, -3 * s - 2 * padding, s - padding, s - padding);
+    createBoxFixture(newBlock, -2 * s - 2 * padding, -3 * s - 2 * padding, s - padding, s - padding);
+    createBoxFixture(newBlock, 2 * s + 2 * padding, -3 * s - 2 * padding, s - padding, s - padding);
+    break;
   }
 
   newBlock.setLinearDamping(1.8f);
@@ -305,7 +320,7 @@ void createBoxFixture(Body body, float x, float y, float halfW, float halfH) {
 
   FixtureDef fd = new FixtureDef();
   fd.shape = ps;
-  fd.density = 1.2f;
+  fd.density = 0.2f;
   fd.friction = 1.2f;
   fd.restitution = 0.0f;
 
@@ -315,7 +330,7 @@ void createBoxFixture(Body body, float x, float y, float halfW, float halfH) {
 void createGround() {
   float groundWidth = width;
   float groundHeight = 20;
-Vec2 groundPos = new Vec2(width / 2, yChaoFisico + groundHeight / 2);
+  Vec2 groundPos = new Vec2(width / 2, yChaoFisico + groundHeight / 2);
 
 
 
@@ -327,7 +342,7 @@ Vec2 groundPos = new Vec2(width / 2, yChaoFisico + groundHeight / 2);
   shape.setAsBox(
     box2d.scalarPixelsToWorld(groundWidth / 2),
     box2d.scalarPixelsToWorld(groundHeight / 2)
-  );
+    );
 
   FixtureDef fd = new FixtureDef();
   fd.shape = shape;
@@ -359,6 +374,13 @@ void createDivider() {
 }
 
 void keyPressed() {
+  if (gameOver) {
+    if (key == 'r' || key == 'R') {
+      reiniciarJogo();
+    }
+    return;  // não deixa outros comandos funcionarem durante game over
+  }
+
   if (gameOver || telaInicial) return;
 
   float moveSpeed = box2d.scalarPixelsToWorld(blockSize * 3);
@@ -390,11 +412,21 @@ void keyPressed() {
       fallingBlock2.setAngularVelocity(0);
     }
   }
+
+  // Limpar chão para Jogador 1 (tecla 'z' ou 'Z')
+  if (key == 'z' || key == 'Z') {
+    limparBlocosDoLado(true);
+  }
+
+  // Limpar chão para Jogador 2 (tecla 'm' ou 'M')
+  if (key == 'm' || key == 'M') {
+    limparBlocosDoLado(false);
+  }
 }
 
 void mousePressed() {
   if (telaInicial && mouseX >= botaoX && mouseX <= botaoX + botaoW &&
-      mouseY >= botaoY && mouseY <= botaoY + botaoH) {
+    mouseY >= botaoY && mouseY <= botaoY + botaoH) {
     telaInicial = false;
     videoIntro.stop();
     somIntro.stop();
@@ -419,27 +451,27 @@ class Confete {
   }
 
   void reset() {
-  x = random(width);
-  y = random(-height, 0);
-  speedY = random(2, 4);
-  angle = random(TWO_PI);
-  rotationSpeed = random(-0.03, 0.03);
+    x = random(width);
+    y = random(-height, 0);
+    speedY = random(2, 4);
+    angle = random(TWO_PI);
+    rotationSpeed = random(-0.03, 0.03);
 
-  w = random(12, 18);
-  h = random(12, 18);
+    w = random(12, 18);
+    h = random(12, 18);
 
-  // Cores variadas
-  color[] cores = {
-    color(255, 0, 0),    // vermelho
-    color(0, 0, 255),    // azul
-    color(0, 200, 0),    // verde
-    color(255, 200, 0),  // amarelo
-    color(255, 100, 0),  // laranja
-    color(180, 0, 180),  // roxo
-    color(0, 200, 200)   // ciano
-  };
-  col = cores[int(random(cores.length))];
-}
+    // Cores variadas
+    color[] cores = {
+      color(255, 0, 0), // vermelho
+      color(0, 0, 255), // azul
+      color(0, 200, 0), // verde
+      color(255, 200, 0), // amarelo
+      color(255, 100, 0), // laranja
+      color(180, 0, 180), // roxo
+      color(0, 200, 200)   // ciano
+    };
+    col = cores[int(random(cores.length))];
+  }
 
 
   void update() {
@@ -483,12 +515,12 @@ class ConfeteVitoria {
     size = random(8, 15);
 
     color[] cores = {
-      color(255, 0, 0),    // vermelho
-      color(0, 0, 255),    // azul
-      color(0, 200, 0),    // verde
-      color(255, 200, 0),  // amarelo
-      color(255, 100, 0),  // laranja
-      color(180, 0, 180),  // roxo
+      color(255, 0, 0), // vermelho
+      color(0, 0, 255), // azul
+      color(0, 200, 0), // verde
+      color(255, 200, 0), // amarelo
+      color(255, 100, 0), // laranja
+      color(180, 0, 180), // roxo
       color(0, 200, 200)   // ciano
     };
     col = cores[int(random(cores.length))];
@@ -520,4 +552,50 @@ class ConfeteVitoria {
 
     popMatrix();
   }
+}
+
+void limparBlocosDoLado(boolean esquerda) {
+  // Vamos criar uma lista temporária para evitar ConcurrentModificationException
+  ArrayList<Body> blocosParaRemover = new ArrayList<Body>();
+
+  for (Body b : allBlocks) {
+    Vec2 pos = box2d.getBodyPixelCoord(b);
+    if (esquerda && pos.x < width/2) {
+      blocosParaRemover.add(b);
+    } else if (!esquerda && pos.x >= width/2) {
+      blocosParaRemover.add(b);
+    }
+  }
+
+  // Remover os corpos do mundo e da lista allBlocks
+  for (Body b : blocosParaRemover) {
+    box2d.destroyBody(b);
+    allBlocks.remove(b);
+  }
+}
+
+void reiniciarJogo() {
+  // Remover todos os blocos do mundo
+  for (Body b : allBlocks) {
+    box2d.destroyBody(b);
+  }
+  allBlocks.clear();
+
+  // Resetar variáveis do jogo
+  gameOver = false;
+  winnerText = "";
+  fallingBlock1 = null;
+  fallingBlock2 = null;
+  canDropNewBlock1 = true;
+  canDropNewBlock2 = true;
+
+  // Parar som de vitória e tocar som do jogo
+  somVitoria.stop();
+  if (!tocandoSomJogo) {
+    somJogo.loop();
+    tocandoSomJogo = true;
+  }
+
+  // Retomar vídeo de fundo
+  videoJogo.play();
 }
